@@ -1,4 +1,3 @@
-from __future__ import print_function
 import pickle
 import os.path
 from googleapiclient.discovery import build
@@ -52,10 +51,13 @@ def read_data_from_gsheet(spreadSheetID, rangeName):
         return dataframe
 
 
+# Creating T-shirts
+
 # Reading data from google sheet
 spreadSheetID = '1n329f-UfjCc71QrxxAOkVisRXZKXqL-iq9mm_sedB1A'
 rangeName = 'ARTs!A1:Q10'
 df = read_data_from_gsheet(spreadSheetID, rangeName)
+columns = df.columns
 
 # Configuration
 chunkSize = 20
@@ -68,9 +70,49 @@ mainCol = ['sku', 'meta:_sku', 'post_title', 'post_status', 'post_type', 'Type: 
            'attribute:pa_wash', 'attribute_data:pa_wash', 'meta:_stock_status', 'meta:_wc_average_rating',
            'meta:_wc_rating_count', 'post_content', 'post_excerpt']
 
-mainSheet = []
+a = ['MainCat', 'Category', 'ArtCode', 'Title', 'Hashtag', 'Tshirt-سفید',
+     'Tshirt-مشکی', 'Tshirt-خاکستری', 'Tshirt-آبی', 'Tshirt-زرشکی',
+     'Tshirt-زرد', 'Tshirt-سبز', 'Hoodie-ملانژ', 'Hoodie-مشکی',
+     'Hoodie-زرشکی', 'Hoodie-نارنجی', 'Hoodie-سرمه‌ای']
+
+mainSheet = pd.DataFrame([], columns=mainCol)
+
+tshirtColor = ['سفید', 'مشکی', 'خاکستری', 'آبی', 'زرشکی', 'زرد', 'سبز']
+tshirtSize = ['M', 'L', 'XL', '2XL', '3XL']
+hoodieColor = ['ملانژ', 'مشکی', 'زرشکی', 'نارنجی', 'سرمه‌ای']
+hoodieSize = ['M', 'L', 'XL']
+colorIndex = pd.Series(
+    ['white', 'black', 'charcoal', 'blue', 'burgundy', 'yellow', 'greygreen', 'melange', 'orange', 'navy'],
+    index=['سفید', 'مشکی', 'خاکستری', 'آبی', 'زرشکی', 'زرد', 'سبز', 'ملانژ', 'نارنجی', 'سرمه‌ای']
+)
+
+i = 0
 for artCode in df['ArtCode']:
+    # create T-shirts
+    sku = df.loc[[i], ['ArtCode']] + '-TS'
+    post_title = df.loc[[i], ['Title']]
+    post_status = 'publish'
+    post_type = 'product'
+    product_type = 'variable'
+    product_cat = df.loc[[i], ['Category']]
+    product_cat = product_cat.replace(" - ", ">")
+    product_cat = product_cat.replace("- ", ">")
+    product_cat = product_cat.replace(" -", ">")
+    product_cat = product_cat.replace("-", ">")
+    product_tag = df.loc[[i], ['Hashtag']]
+    regular_price = 120000
+    manage_stock = 'no'
+    stock_status = 'instock'
 
-    # Creating T-shirts
-    mainSheet.extend(mainCol)
+    images = sku + '-' + colorIndex[0] + '.jpg'
+    images = images + '|' + sku + '-' + colorIndex[0] + '-men' + '.jpg'
+    images = images + '|' + sku + '-' + colorIndex[0] + '-women' + '.jpg'
+    for color in tshirtColor[1:]:
+        images = images + '|' + sku + '-' + colorIndex[color] + '.jpg'
+        images = images + '|' + sku + '-' + colorIndex[color] + '-men' + '.jpg'
+        images = images + '|' + sku + '-' + colorIndex[color] + '-women' + '.jpg'
 
+
+
+
+    i += 1
