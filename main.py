@@ -138,6 +138,13 @@ for artCode in df['ArtCode']:
             tempColorList.append(colorIndex[tshirtColor[j]])
         j += 1
 
+    j = 0
+    for color in hoodieColor:
+        if int(df.loc[i]['Hoodie-' + hoodieColor[j]]) == 1:
+            if colorIndex[hoodieColor[j]] not in tempColorList:
+                pa_color = pa_color + '|' + colorIndex[hoodieColor[j]]
+        j += 1
+
     pa_color_default = random.choice(tempColorList)
     pa_color_data = '3|1|1'
 
@@ -146,6 +153,11 @@ for artCode in df['ArtCode']:
     for size in tshirtSize:
         pa_size = pa_size + ('|' if j > 0 else '') + tshirtSize[j]
         j += 1
+    j = 0
+    for size in hoodieSize:
+        pa_size = pa_size + '|' + hoodieSize[j]
+        j += 1
+
     pa_size_default = tshirtSize[1]
     pa_size_data = '4|1|1'
 
@@ -233,8 +245,15 @@ for artCode in df['ArtCode']:
     tempColorList = []
     for color in hoodieColor:
         if int(df.loc[i]['Hoodie-' + hoodieColor[j]]) == 1:
-            pa_color = pa_color + ('|' if j > 0 else '') + colorIndex[hoodieColor[j]]
+            pa_color = pa_color + '|' + colorIndex[hoodieColor[j]]
             tempColorList.append(colorIndex[hoodieColor[j]])
+        j += 1
+
+    j = 0
+    for color in tshirtColor:
+        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1:
+            if colorIndex[tshirtColor[j]] not in tempColorList:
+                pa_color = pa_color + ('|' if j > 0 else '') + colorIndex[tshirtColor[j]]
         j += 1
 
     pa_color_default = random.choice(tempColorList)
@@ -242,9 +261,14 @@ for artCode in df['ArtCode']:
 
     pa_size = ''
     j = 0
-    for size in hoodieSize:
-        pa_size = pa_size + ('|' if j > 0 else '') + hoodieSize[j]
+    for size in tshirtSize:
+        pa_size = pa_size + ('|' if j > 0 else '') + tshirtSize[j]
         j += 1
+    j = 0
+    for size in hoodieSize:
+        pa_size = pa_size + '|' + hoodieSize[j]
+        j += 1
+
     pa_size_default = hoodieSize[1]
     pa_size_data = '4|1|1'
 
