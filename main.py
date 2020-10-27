@@ -75,6 +75,9 @@ tshirt_sale_price = 120000
 hoodie_regular_price = 320000
 hoodie_sale_price = 320000
 
+tshirtHasSexMockup = True
+hoodieHasSexMockup = False
+
 sexList = ['آقایان', 'خانم‌ها']
 tshirtColor = ['color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color7']
 tshirtSize = ['M', 'L', 'XL', '2XL', '3XL']
@@ -115,17 +118,15 @@ for artCode in df['ArtCode']:
     j = 0
     tempColorList = []
     for color in tshirtColor:
-        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1:
-            pa_color = pa_color + ('|' if j > 0 else '') + colorIndex[tshirtColor[j]]
-            tempColorList.append(tshirtColor[j])
+        if int(df.loc[i]['Tshirt-' + color]) == 1:
+            pa_color = pa_color + ('|' if j > 0 else '') + colorIndex[color]
+            tempColorList.append(color)
         j += 1
 
-    j = 0
     for color in hoodieColor:
-        if int(df.loc[i]['Hoodie-' + hoodieColor[j]]) == 1:
-            if hoodieColor[j] not in tempColorList:
-                pa_color = pa_color + '|' + colorIndex[hoodieColor[j]]
-        j += 1
+        if int(df.loc[i]['Hoodie-' + color]) == 1:
+            if color not in tempColorList:
+                pa_color = pa_color + '|' + colorIndex[color]
 
     pa_color_default_index = random.choice(tempColorList)
     pa_color_default = colorIndex[pa_color_default_index]
@@ -133,24 +134,23 @@ for artCode in df['ArtCode']:
 
     images = ""
     images = images + df.loc[i]['ArtCode'] + '-TS-' + pa_color_default_index + '.jpg'
-    images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + pa_color_default_index + '-men' + '.jpg'
-    images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + pa_color_default_index + '-women' + '.jpg'
+    if tshirtHasSexMockup:
+        images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + pa_color_default_index + '-men' + '.jpg'
+        images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + pa_color_default_index + '-women' + '.jpg'
 
-    j = 0
     for color in tshirtColor:
-        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1 and tshirtColor[j] != pa_color_default_index:
-            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '.jpg'
-            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '-men' + '.jpg'
-            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '-women' + '.jpg'
-        j += 1
+        if int(df.loc[i]['Tshirt-' + color]) == 1 and color != pa_color_default_index:
+            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + color + '.jpg'
+            if tshirtHasSexMockup:
+                images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + color + '-men' + '.jpg'
+                images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + color + '-women' + '.jpg'
 
-    j = 0
     for color in hoodieColor:
-        if int(df.loc[i]['Hoodie-' + hoodieColor[j]]) == 1:
-            images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + hoodieColor[j] + '.jpg'
-            images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + hoodieColor[j] + '-men' + '.jpg'
-            images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + hoodieColor[j] + '-women' + '.jpg'
-        j += 1
+        if int(df.loc[i]['Hoodie-' + color]) == 1:
+            images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + color + '.jpg'
+            if hoodieHasSexMockup:
+                images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + color + '-men' + '.jpg'
+                images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + color + '-women' + '.jpg'
 
     pa_style = 'تیشرت|هودی'
     pa_style_default = 'تیشرت'
@@ -164,14 +164,13 @@ for artCode in df['ArtCode']:
     j = 0
     tempSizeList = []
     for size in tshirtSize:
-        pa_size = pa_size + ('|' if j > 0 else '') + tshirtSize[j]
-        tempSizeList.append(tshirtSize[j])
+        pa_size = pa_size + ('|' if j > 0 else '') + size
+        tempSizeList.append(size)
         j += 1
-    j = 0
+
     for size in hoodieSize:
-        if hoodieSize[j] not in tempSizeList:
-            pa_size = pa_size + '|' + hoodieSize[j]
-        j += 1
+        if size not in tempSizeList:
+            pa_size = pa_size + '|' + size
 
     pa_size_default = tshirtSize[1]
     pa_size_data = '4|1|1'
@@ -215,11 +214,12 @@ for artCode in df['ArtCode']:
     variantCol = [
         'parent_sku', 'sku', 'regular_price', 'meta:_regular_price', 'meta:_price', 'sale_price',
         'manage_stock', 'stock_status', 'meta:attribute_pa_style', 'meta:attribute_pa_sex',
-        'meta:attribute_pa_color', 'meta:attribute_pa_size'
+        'meta:attribute_pa_color', 'meta:attribute_pa_size', 'image'
     ]
 
     j = 0
     for sex in sexList:
+        imageSex = '-men' if sex == 'آقایان' else '-women'
         for color in tshirtColor:
             if int(df.loc[i]['Tshirt-' + color]) == 1:
                 for size in tshirtSize:
@@ -227,7 +227,9 @@ for artCode in df['ArtCode']:
                     row = [
                         sku, sku + '-' + str(j),
                         tshirt_regular_price, tshirt_regular_price, tshirt_sale_price, tshirt_sale_price, manage_stock,
-                        stock_status, 'تیشرت', sex, colorIndex[color].replace(' ', '-'), size
+                        stock_status, 'تیشرت', sex, colorIndex[color].replace(' ', '-'), size,
+                        (df.loc[i]['ArtCode'] + '-TS-' + color + imageSex + '.jpg') if tshirtHasSexMockup
+                        else (df.loc[i]['ArtCode'] + '-TS-' + color + '.jpg')
                     ]
 
                     fileName = 'Variant-TS-' + str(divmod(i, chunkSize)[0]) + '.csv'
@@ -238,6 +240,7 @@ for artCode in df['ArtCode']:
                         wr.writerow(row)
 
     for sex in sexList:
+        imageSex = '-men' if sex == 'آقایان' else '-women'
         for color in hoodieColor:
             if int(df.loc[i]['Hoodie-' + color]) == 1:
                 for size in hoodieSize:
@@ -245,7 +248,9 @@ for artCode in df['ArtCode']:
                     row = [
                         sku, sku + '-' + str(j),
                         hoodie_regular_price, hoodie_regular_price, hoodie_sale_price, hoodie_sale_price, manage_stock,
-                        stock_status, 'هودی', sex, colorIndex[color].replace(' ', '-'), size
+                        stock_status, 'هودی', sex, colorIndex[color].replace(' ', '-'), size,
+                        (df.loc[i]['ArtCode'] + '-HD-' + color + imageSex + '.jpg') if hoodieHasSexMockup
+                        else (df.loc[i]['ArtCode'] + '-HD-' + color + '.jpg')
                     ]
 
                     fileName = 'Variant-TS-' + str(divmod(i, chunkSize)[0]) + '.csv'
@@ -253,7 +258,6 @@ for artCode in df['ArtCode']:
                         wr = csv.writer(file)
                         wr.writerow(row)
     i += 1
-
 
 i = 0
 for artCode in df['ArtCode']:
@@ -277,17 +281,15 @@ for artCode in df['ArtCode']:
     j = 0
     tempColorList = []
     for color in hoodieColor:
-        if int(df.loc[i]['Hoodie-' + hoodieColor[j]]) == 1:
-            pa_color = pa_color + ('|' if j > 0 else '') + colorIndex[hoodieColor[j]]
-            tempColorList.append(hoodieColor[j])
+        if int(df.loc[i]['Hoodie-' + color]) == 1:
+            pa_color = pa_color + ('|' if j > 0 else '') + colorIndex[color]
+            tempColorList.append(color)
         j += 1
 
-    j = 0
     for color in tshirtColor:
-        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1:
-            if tshirtColor[j] not in tempColorList:
-                pa_color = pa_color + '|' + colorIndex[tshirtColor[j]]
-        j += 1
+        if int(df.loc[i]['Tshirt-' + color]) == 1:
+            if color not in tempColorList:
+                pa_color = pa_color + '|' + colorIndex[color]
 
     pa_color_default_index = random.choice(tempColorList)
     pa_color_default = colorIndex[pa_color_default_index]
@@ -295,24 +297,23 @@ for artCode in df['ArtCode']:
 
     images = ""
     images = images + df.loc[i]['ArtCode'] + '-HD-' + pa_color_default_index + '.jpg'
-    images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + pa_color_default_index + '-men' + '.jpg'
-    images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + pa_color_default_index + '-women' + '.jpg'
+    if hoodieHasSexMockup:
+        images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + pa_color_default_index + '-men' + '.jpg'
+        images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + pa_color_default_index + '-women' + '.jpg'
 
-    j = 0
     for color in hoodieColor:
-        if int(df.loc[i]['Hoodie-' + hoodieColor[j]]) == 1 and hoodieColor[j] != pa_color_default_index:
-            images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + hoodieColor[j] + '.jpg'
-            images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + hoodieColor[j] + '-men' + '.jpg'
-            images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + hoodieColor[j] + '-women' + '.jpg'
-        j += 1
+        if int(df.loc[i]['Hoodie-' + color]) == 1 and color != pa_color_default_index:
+            images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + color + '.jpg'
+            if hoodieHasSexMockup:
+                images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + color + '-men' + '.jpg'
+                images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + color + '-women' + '.jpg'
 
-    j = 0
     for color in tshirtColor:
-        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1:
-            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '.jpg'
-            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '-men' + '.jpg'
-            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '-women' + '.jpg'
-        j += 1
+        if int(df.loc[i]['Tshirt-' + color]) == 1:
+            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + color + '.jpg'
+            if tshirtHasSexMockup:
+                images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + color + '-men' + '.jpg'
+                images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + color + '-women' + '.jpg'
 
     pa_style = 'تیشرت|هودی'
     pa_style_default = 'هودی'
@@ -326,14 +327,13 @@ for artCode in df['ArtCode']:
     j = 0
     tempSizeList = []
     for size in tshirtSize:
-        pa_size = pa_size + ('|' if j > 0 else '') + tshirtSize[j]
-        tempSizeList.append(tshirtSize[j])
+        pa_size = pa_size + ('|' if j > 0 else '') + size
+        tempSizeList.append(size)
         j += 1
-    j = 0
+
     for size in hoodieSize:
-        if hoodieSize[j] not in tempSizeList:
-            pa_size = pa_size + '|' + hoodieSize[j]
-        j += 1
+        if size not in tempSizeList:
+            pa_size = pa_size + '|' + size
 
     pa_size_default = hoodieSize[1]
     pa_size_data = '4|1|1'
@@ -377,11 +377,12 @@ for artCode in df['ArtCode']:
         variantCol = [
             'parent_sku', 'sku', 'regular_price', 'meta:_regular_price', 'meta:_price', 'sale_price',
             'manage_stock', 'stock_status', 'meta:attribute_pa_style', 'meta:attribute_pa_sex',
-            'meta:attribute_pa_color', 'meta:attribute_pa_size'
+            'meta:attribute_pa_color', 'meta:attribute_pa_size', 'image'
         ]
 
         j = 0
         for sex in sexList:
+            imageSex = '-men' if sex == 'آقایان' else '-women'
             for color in tshirtColor:
                 if int(df.loc[i]['Tshirt-' + color]) == 1:
                     for size in tshirtSize:
@@ -390,7 +391,9 @@ for artCode in df['ArtCode']:
                             sku, sku + '-' + str(j),
                             tshirt_regular_price, tshirt_regular_price, tshirt_sale_price, tshirt_sale_price,
                             manage_stock,
-                            stock_status, 'تیشرت', sex, colorIndex[color].replace(' ', '-'), size
+                            stock_status, 'تیشرت', sex, colorIndex[color].replace(' ', '-'), size,
+                            (df.loc[i]['ArtCode'] + '-TS-' + color + imageSex + '.jpg') if tshirtHasSexMockup
+                            else (df.loc[i]['ArtCode'] + '-TS-' + color + '.jpg')
                         ]
 
                         fileName = 'Variant-HD-' + str(divmod(i, chunkSize)[0]) + '.csv'
@@ -401,6 +404,7 @@ for artCode in df['ArtCode']:
                             wr.writerow(row)
 
         for sex in sexList:
+            imageSex = '-men' if sex == 'آقایان' else '-women'
             for color in hoodieColor:
                 if int(df.loc[i]['Hoodie-' + color]) == 1:
                     for size in hoodieSize:
@@ -409,7 +413,9 @@ for artCode in df['ArtCode']:
                             sku, sku + '-' + str(j),
                             hoodie_regular_price, hoodie_regular_price, hoodie_sale_price, hoodie_sale_price,
                             manage_stock,
-                            stock_status, 'هودی', sex, colorIndex[color].replace(' ', '-'), size
+                            stock_status, 'هودی', sex, colorIndex[color].replace(' ', '-'), size,
+                            (df.loc[i]['ArtCode'] + '-HD-' + color + imageSex + '.jpg') if hoodieHasSexMockup
+                            else (df.loc[i]['ArtCode'] + '-HD-' + color + '.jpg')
                         ]
 
                         fileName = 'Variant-HD-' + str(divmod(i, chunkSize)[0]) + '.csv'
