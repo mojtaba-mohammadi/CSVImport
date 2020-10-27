@@ -69,6 +69,13 @@ mainCol = ['sku', 'meta:_sku', 'post_title', 'post_status', 'post_type', 'Type: 
 
 mainSheet = pd.DataFrame([], columns=mainCol)
 
+tshirt_regular_price = 120000
+tshirt_sale_price = 120000
+
+hoodie_regular_price = 320000
+hoodie_sale_price = 320000
+
+sexList = ['آقایان', 'خانم‌ها']
 tshirtColor = ['color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color7']
 tshirtSize = ['M', 'L', 'XL', '2XL', '3XL']
 hoodieColor = ['color8', 'color2', 'color5', 'color9', 'color10']
@@ -124,11 +131,15 @@ for artCode in df['ArtCode']:
     pa_color_default = colorIndex[pa_color_default_index]
     pa_color_data = '3|1|1'
 
-    j = 0
     images = ""
+    images = images + df.loc[i]['ArtCode'] + '-TS-' + pa_color_default_index + '.jpg'
+    images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + pa_color_default_index + '-men' + '.jpg'
+    images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + pa_color_default_index + '-women' + '.jpg'
+
+    j = 0
     for color in tshirtColor:
-        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1:
-            images = images + ('|' if j > 0 else '') + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '.jpg'
+        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1 and tshirtColor[j] != pa_color_default_index:
+            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '.jpg'
             images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '-men' + '.jpg'
             images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '-women' + '.jpg'
         j += 1
@@ -193,13 +204,56 @@ for artCode in df['ArtCode']:
            wc_review_count, stock_status, post_content, post_excerpt
            ]
 
-    fileName = 'csvfile-TS-' + str(divmod(i, chunkSize)[0]) + '.csv'
+    fileName = 'Main-TS-' + str(divmod(i, chunkSize)[0]) + '.csv'
     with open(fileName, "a", newline='') as file:
         wr = csv.writer(file)
         if divmod(i, chunkSize)[1] == 0:
             wr.writerow(mainCol)
         wr.writerow(row)
+
+    # Create T-shirt Variants
+    variantCol = [
+        'parent_sku', 'sku', 'regular_price', 'meta:_regular_price', 'meta:_price', 'sale_price',
+        'manage_stock', 'stock_status', 'meta:attribute_pa_style', 'meta:attribute_pa_sex',
+        'meta:attribute_pa_color', 'meta:attribute_pa_size'
+    ]
+
+    j = 0
+    for sex in sexList:
+        for color in tshirtColor:
+            if int(df.loc[i]['Tshirt-' + color]) == 1:
+                for size in tshirtSize:
+                    j += 1
+                    row = [
+                        sku, sku + '-' + str(j),
+                        tshirt_regular_price, tshirt_regular_price, tshirt_sale_price, tshirt_sale_price, manage_stock,
+                        stock_status, 'تیشرت', sex, colorIndex[color].replace(' ', '-'), size
+                    ]
+
+                    fileName = 'Variant-TS-' + str(divmod(i, chunkSize)[0]) + '.csv'
+                    with open(fileName, "a", newline='') as file:
+                        wr = csv.writer(file)
+                        if divmod(i, chunkSize)[1] == 0 and j == 1:
+                            wr.writerow(variantCol)
+                        wr.writerow(row)
+
+    for sex in sexList:
+        for color in hoodieColor:
+            if int(df.loc[i]['Hoodie-' + color]) == 1:
+                for size in hoodieSize:
+                    j += 1
+                    row = [
+                        sku, sku + '-' + str(j),
+                        hoodie_regular_price, hoodie_regular_price, hoodie_sale_price, hoodie_sale_price, manage_stock,
+                        stock_status, 'هودی', sex, colorIndex[color].replace(' ', '-'), size
+                    ]
+
+                    fileName = 'Variant-TS-' + str(divmod(i, chunkSize)[0]) + '.csv'
+                    with open(fileName, "a", newline='') as file:
+                        wr = csv.writer(file)
+                        wr.writerow(row)
     i += 1
+
 
 i = 0
 for artCode in df['ArtCode']:
@@ -219,21 +273,45 @@ for artCode in df['ArtCode']:
     manage_stock = 'no'
     stock_status = 'instock'
 
+    pa_color = ''
     j = 0
-    images = ""
-    for color in tshirtColor:
-        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1:
-            images = images + ('|' if j > 0 else '') + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '.jpg'
-            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '-men' + '.jpg'
-            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '-women' + '.jpg'
+    tempColorList = []
+    for color in hoodieColor:
+        if int(df.loc[i]['Hoodie-' + hoodieColor[j]]) == 1:
+            pa_color = pa_color + ('|' if j > 0 else '') + colorIndex[hoodieColor[j]]
+            tempColorList.append(hoodieColor[j])
         j += 1
 
     j = 0
+    for color in tshirtColor:
+        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1:
+            if tshirtColor[j] not in tempColorList:
+                pa_color = pa_color + '|' + colorIndex[tshirtColor[j]]
+        j += 1
+
+    pa_color_default_index = random.choice(tempColorList)
+    pa_color_default = colorIndex[pa_color_default_index]
+    pa_color_data = '3|1|1'
+
+    images = ""
+    images = images + df.loc[i]['ArtCode'] + '-HD-' + pa_color_default_index + '.jpg'
+    images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + pa_color_default_index + '-men' + '.jpg'
+    images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + pa_color_default_index + '-women' + '.jpg'
+
+    j = 0
     for color in hoodieColor:
-        if int(df.loc[i]['Hoodie-' + hoodieColor[j]]) == 1:
+        if int(df.loc[i]['Hoodie-' + hoodieColor[j]]) == 1 and hoodieColor[j] != pa_color_default_index:
             images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + hoodieColor[j] + '.jpg'
             images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + hoodieColor[j] + '-men' + '.jpg'
             images = images + '|' + df.loc[i]['ArtCode'] + '-HD-' + hoodieColor[j] + '-women' + '.jpg'
+        j += 1
+
+    j = 0
+    for color in tshirtColor:
+        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1:
+            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '.jpg'
+            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '-men' + '.jpg'
+            images = images + '|' + df.loc[i]['ArtCode'] + '-TS-' + tshirtColor[j] + '-women' + '.jpg'
         j += 1
 
     pa_style = 'تیشرت|هودی'
@@ -243,25 +321,6 @@ for artCode in df['ArtCode']:
     pa_sex = 'خانم‌ها|آقایان'
     pa_sex_default = random.choice(['آقایان', 'خانم‌ها'])
     pa_sex_data = '2|1|1'
-
-    pa_color = ''
-    j = 0
-    tempColorList = []
-    for color in hoodieColor:
-        if int(df.loc[i]['Hoodie-' + hoodieColor[j]]) == 1:
-            pa_color = pa_color + '|' + colorIndex[hoodieColor[j]]
-            tempColorList.append(colorIndex[hoodieColor[j]])
-        j += 1
-
-    j = 0
-    for color in tshirtColor:
-        if int(df.loc[i]['Tshirt-' + tshirtColor[j]]) == 1:
-            if colorIndex[tshirtColor[j]] not in tempColorList:
-                pa_color = pa_color + ('|' if j > 0 else '') + colorIndex[tshirtColor[j]]
-        j += 1
-
-    pa_color_default = random.choice(tempColorList)
-    pa_color_data = '3|1|1'
 
     pa_size = ''
     j = 0
@@ -307,10 +366,54 @@ for artCode in df['ArtCode']:
            wc_review_count, stock_status, post_content, post_excerpt
            ]
 
-    fileName = 'csvfile-HD-' + str(divmod(i, chunkSize)[0]) + '.csv'
+    fileName = 'Main-HD-' + str(divmod(i, chunkSize)[0]) + '.csv'
     with open(fileName, "a", newline='') as file:
         wr = csv.writer(file)
         if divmod(i, chunkSize)[1] == 0:
             wr.writerow(mainCol)
         wr.writerow(row)
+
+        # Create Hoodie Variants
+        variantCol = [
+            'parent_sku', 'sku', 'regular_price', 'meta:_regular_price', 'meta:_price', 'sale_price',
+            'manage_stock', 'stock_status', 'meta:attribute_pa_style', 'meta:attribute_pa_sex',
+            'meta:attribute_pa_color', 'meta:attribute_pa_size'
+        ]
+
+        j = 0
+        for sex in sexList:
+            for color in tshirtColor:
+                if int(df.loc[i]['Tshirt-' + color]) == 1:
+                    for size in tshirtSize:
+                        j += 1
+                        row = [
+                            sku, sku + '-' + str(j),
+                            tshirt_regular_price, tshirt_regular_price, tshirt_sale_price, tshirt_sale_price,
+                            manage_stock,
+                            stock_status, 'تیشرت', sex, colorIndex[color].replace(' ', '-'), size
+                        ]
+
+                        fileName = 'Variant-HD-' + str(divmod(i, chunkSize)[0]) + '.csv'
+                        with open(fileName, "a", newline='') as file:
+                            wr = csv.writer(file)
+                            if divmod(i, chunkSize)[1] == 0 and j == 1:
+                                wr.writerow(variantCol)
+                            wr.writerow(row)
+
+        for sex in sexList:
+            for color in hoodieColor:
+                if int(df.loc[i]['Hoodie-' + color]) == 1:
+                    for size in hoodieSize:
+                        j += 1
+                        row = [
+                            sku, sku + '-' + str(j),
+                            hoodie_regular_price, hoodie_regular_price, hoodie_sale_price, hoodie_sale_price,
+                            manage_stock,
+                            stock_status, 'هودی', sex, colorIndex[color].replace(' ', '-'), size
+                        ]
+
+                        fileName = 'Variant-HD-' + str(divmod(i, chunkSize)[0]) + '.csv'
+                        with open(fileName, "a", newline='') as file:
+                            wr = csv.writer(file)
+                            wr.writerow(row)
     i += 1
